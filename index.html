@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard NPS — QHL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --navy:   #200249;
+      --red:    #E40101;
+      --pdark:  #5C12A7;
+      --pmid:   #7164A5;
+      --owhite: #F4F4F9;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: #fff;
+      color: var(--navy);
+      padding-bottom: 64px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #200249 0%, #5C12A7 100%);
+      padding: 30px 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .h-brand .h-title {
+      font-size: 25px; font-weight: 800; color: #fff; letter-spacing: -.3px;
+    }
+    .h-brand .h-sub {
+      font-size: 12.5px; color: rgba(255,255,255,.6); margin-top: 3px; font-weight: 400;
+    }
+    .h-meta { text-align: right; }
+    .h-meta .h-lbl {
+      font-size: 9.5px; text-transform: uppercase; letter-spacing: 1.8px; color: rgba(255,255,255,.45);
+    }
+    .h-meta .h-val {
+      font-size: 13px; color: rgba(255,255,255,.85); font-weight: 500; margin-top: 3px;
+    }
+    #refreshBtn {
+      margin-top: 12px; display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.13); border: 1.5px solid rgba(255,255,255,.28);
+      color: white; padding: 7px 16px; border-radius: 20px;
+      font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all .2s; white-space: nowrap;
+    }
+    #refreshBtn:hover:not(:disabled) { background: rgba(255,255,255,.24); }
+    #refreshBtn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── CONTAINER ── */
+    .wrap { max-width: 1380px; margin: 0 auto; padding: 40px 52px; }
+
+    /* ── SECTION LABEL ── */
+    .sec {
+      font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 2.5px; color: var(--pmid); margin-bottom: 18px;
+    }
+
+    /* ── DIVIDER ── */
+    .div { height: 1px; background: linear-gradient(to right, rgba(92,18,167,.25), transparent); margin: 36px 0; }
+
+    /* ── KPI ROW ── */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: 2.4fr 1fr 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .kcard { border-radius: 16px; padding: 26px 28px 22px; }
+
+    .kcard-main {
+      background: linear-gradient(135deg, #200249 0%, #5C12A7 100%);
+      color: white;
+    }
+    .kcard-p { background: var(--owhite); border-top: 4px solid #27AE60; }
+    .kcard-n { background: var(--owhite); border-top: 4px solid #F39C12; }
+    .kcard-d { background: var(--owhite); border-top: 4px solid #E40101; }
+
+    .kcard .klbl {
+      font-size: 9.5px; text-transform: uppercase; letter-spacing: 1.5px;
+      font-weight: 700; margin-bottom: 12px; opacity: .6;
+    }
+    .kcard-main .klbl { color: white; }
+
+    .kcard .kval {
+      font-size: 54px; font-weight: 800; line-height: 1;
+    }
+    .kcard-main .kval { color: white; }
+    .kcard-p .kval  { color: #27AE60; }
+    .kcard-n .kval  { color: #F39C12; }
+    .kcard-d .kval  { color: #E40101; }
+
+    .kcard .ksub {
+      font-size: 11.5px; margin-top: 8px; opacity: .6;
+    }
+    .kcard-main .ksub { color: rgba(255,255,255,.65); }
+
+    .nps-row { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; }
+    .nps-num { font-size: 70px; font-weight: 800; color: white; line-height: 1; }
+    .nps-aside { display: flex; flex-direction: column; padding-bottom: 6px; }
+    .nps-aside .na-of { font-size: 12px; color: rgba(255,255,255,.55); margin-bottom: 8px; }
+    .nps-badge {
+      display: inline-block; padding: 4px 14px; border-radius: 20px;
+      font-size: 12px; font-weight: 700; color: white;
+    }
+
+    /* ── ZONE BAR ── */
+    .zone-wrap { margin-bottom: 32px; }
+
+    .zone-bar {
+      display: flex; height: 42px; border-radius: 10px;
+      overflow: hidden; position: relative; margin-bottom: 6px;
+    }
+    .zseg {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9.5px; font-weight: 700; color: white;
+      text-align: center; line-height: 1.3; padding: 0 6px;
+    }
+    .zc  { background: #F16060; flex: 100; }
+    .za  { background: #F5B731; flex: 50; }
+    .zq  { background: #56C264; flex: 25; }
+    .ze  { background: #27A745; flex: 15; }
+    .zen { background: #1A78C2; flex: 10; }
+
+    .zone-pointer-row {
+      position: relative; height: 28px; margin-top: 2px;
+    }
+    .zone-pointer {
+      position: absolute; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .zp-lbl {
+      background: var(--navy); color: white; font-size: 10.5px;
+      font-weight: 700; padding: 2px 9px; border-radius: 4px;
+      white-space: nowrap; margin-bottom: 3px;
+    }
+    .zp-arrow {
+      width: 0; height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-bottom: 8px solid var(--navy);
+    }
+
+    .zone-legend {
+      display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px;
+    }
+    .zl-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--pmid); }
+    .zl-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ── FILTER BUTTONS ── */
+    .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+    .fbtn {
+      padding: 7px 18px; border-radius: 20px; border: 2px solid transparent;
+      font-family: 'Outfit', sans-serif; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; transition: all .18s;
+    }
+    .fbtn-all  { background: var(--owhite); color: var(--navy); border-color: var(--owhite); }
+    .fbtn-p    { background: #E8F5E9; color: #27AE60; border-color: #E8F5E9; }
+    .fbtn-n    { background: #FFF8E1; color: #F39C12; border-color: #FFF8E1; }
+    .fbtn-d    { background: #FFEBEE; color: #E40101; border-color: #FFEBEE; }
+    .fbtn-all.on  { background: var(--navy);  color: white; border-color: var(--navy); }
+    .fbtn-p.on    { background: #27AE60; color: white; border-color: #27AE60; }
+    .fbtn-n.on    { background: #F39C12; color: white; border-color: #F39C12; }
+    .fbtn-d.on    { background: #E40101; color: white; border-color: #E40101; }
+    .fbtn:hover { opacity: .85; }
+    .fcnt {
+      background: rgba(0,0,0,.12); border-radius: 10px;
+      padding: 1px 7px; margin-left: 3px; font-size: 10.5px;
+    }
+
+    /* ── TABLE ── */
+    .tbl-card { background: var(--owhite); border-radius: 16px; overflow: hidden; margin-bottom: 32px; }
+    .rtbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .rtbl th {
+      padding: 13px 16px; text-align: left; font-size: 9.5px;
+      text-transform: uppercase; letter-spacing: 1.5px; color: var(--pmid); font-weight: 700;
+      background: rgba(113,100,165,.09); border-bottom: 1px solid rgba(113,100,165,.14);
+    }
+    .rtbl td {
+      padding: 14px 16px; border-bottom: 1px solid rgba(113,100,165,.07);
+      vertical-align: top; line-height: 1.58;
+    }
+    .rtbl tr:last-child td { border-bottom: none; }
+    .rtbl tr:hover td { background: rgba(113,100,165,.04); }
+
+    .schip {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 37px; height: 37px; border-radius: 50%; font-weight: 800;
+      font-size: 14px; color: white;
+    }
+    .schip-p { background: #27AE60; }
+    .schip-n { background: #F39C12; }
+    .schip-d { background: #E40101; }
+
+    .ctag {
+      display: inline-block; padding: 3px 10px; border-radius: 10px;
+      font-size: 11px; font-weight: 600;
+    }
+    .ctag-p { background: #E8F5E9; color: #27AE60; }
+    .ctag-n { background: #FFF8E1; color: #F39C12; }
+    .ctag-d { background: #FFEBEE; color: #E40101; }
+
+    .empty {
+      text-align: center; padding: 52px; color: var(--pmid);
+    }
+    .empty .eico { font-size: 38px; margin-bottom: 10px; }
+    .empty .emsg { font-size: 13.5px; }
+
+    /* ── TWO-COL ── */
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-bottom: 28px; }
+    .card { background: var(--owhite); border-radius: 16px; padding: 28px; }
+    .card-ttl {
+      font-size: 13.5px; font-weight: 700; color: var(--navy);
+      margin-bottom: 22px; display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ── WORD CLOUD ── */
+    .wcloud {
+      min-height: 180px; display: flex; flex-wrap: wrap;
+      gap: 10px 14px; align-items: center; justify-content: center; padding: 8px;
+    }
+    .wd {
+      font-weight: 700; border-radius: 6px; padding: 2px 5px;
+      cursor: default; transition: transform .2s, opacity .2s;
+    }
+    .wd:hover { transform: scale(1.12); opacity: .8; }
+
+    /* ── EXPECTATIONS ── */
+    .exp-list { display: flex; flex-direction: column; gap: 18px; }
+    .exp-item { display: flex; flex-direction: column; gap: 6px; }
+    .exp-row { display: flex; justify-content: space-between; font-size: 12.5px; }
+    .exp-name { font-weight: 500; }
+    .exp-cnt { font-weight: 700; color: var(--pdark); }
+    .exp-track { background: rgba(92,18,167,.12); border-radius: 4px; height: 8px; overflow: hidden; }
+    .exp-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+
+    /* ── GAP ANALYSIS ── */
+    .gap-card { background: var(--owhite); border-radius: 16px; padding: 28px; margin-bottom: 28px; }
+    .gap-ttl { font-size: 13.5px; font-weight: 700; margin-bottom: 5px; display: flex; align-items: center; gap: 7px; }
+    .gap-desc { font-size: 11.5px; color: var(--pmid); margin-bottom: 18px; line-height: 1.55; }
+    .gap-ok {
+      display: flex; align-items: center; gap: 12px;
+      background: #E8F5E9; border-radius: 12px; padding: 18px 22px;
+    }
+    .gap-ok .go-ico { font-size: 26px; }
+    .gap-ok .go-txt { font-size: 13px; color: #27AE60; font-weight: 600; line-height: 1.5; }
+
+    /* ── INSIGHTS ── */
+    .ins-card {
+      background: linear-gradient(135deg, #200249 0%, #5C12A7 100%);
+      border-radius: 16px; padding: 36px; margin-bottom: 28px; color: white;
+    }
+    .ins-hdr { font-size: 18px; font-weight: 700; margin-bottom: 26px; display: flex; align-items: center; gap: 10px; }
+    .ins-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+    .ins-item { background: rgba(255,255,255,.1); border-radius: 12px; padding: 20px; }
+    .ins-item .ii-ico { font-size: 22px; margin-bottom: 10px; }
+    .ins-item .ii-type { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; opacity: .55; margin-bottom: 8px; }
+    .ins-item .ii-txt { font-size: 12.5px; line-height: 1.65; opacity: .92; }
+    .ins-item .ii-txt strong { font-weight: 700; opacity: 1; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--navy); color: rgba(255,255,255,.5);
+      text-align: center; padding: 12px; font-size: 11px; letter-spacing: .5px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="h-brand">
+    <div class="h-title">Dashboard NPS · QHL</div>
+    <div class="h-sub">Pesquisa de Satisfação — Monitoramento em Tempo Real</div>
+  </div>
+  <div class="h-meta">
+    <div class="h-lbl">Última atualização</div>
+    <div class="h-val" id="lastUpdated">—</div>
+    <button id="refreshBtn" onclick="refreshDashboard()">↻ Atualizar agora</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- KPIs -->
+  <div class="sec">Visão Geral</div>
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <!-- Zone Bar -->
+  <div class="zone-wrap" id="zoneWrap"></div>
+
+  <div class="div"></div>
+
+  <!-- Responses Table -->
+  <div class="sec">Respostas Completas</div>
+  <div class="filter-row" id="filterRow"></div>
+  <div class="tbl-card">
+    <table class="rtbl" id="rtbl"></table>
+  </div>
+
+  <!-- Word Cloud + Expectations -->
+  <div class="two">
+    <div class="card">
+      <div class="card-ttl">☁️ Nuvem de Palavras · Respostas Qualitativas</div>
+      <div class="wcloud" id="wcloud"></div>
+    </div>
+    <div class="card">
+      <div class="card-ttl">📊 Atendimento às Expectativas</div>
+      <div class="exp-list" id="expList"></div>
+    </div>
+  </div>
+
+  <!-- Gap Analysis -->
+  <div class="gap-card" id="gapCard"></div>
+
+  <!-- Insights -->
+  <div class="ins-card" id="insCard"></div>
+
+</div>
+
+<footer>Documento confidencial — Elaborado por Filum Gestão</footer>
+
+<script>
+// ─── Fetch data.json (fonte de verdade, atualizada pelas rotinas) ──────────
+async function fetchData() {
+  try {
+    const res = await fetch('data.json?_=' + Date.now());
+    if (!res.ok) throw new Error('fetch failed');
+    return await res.json();
+  } catch {
+    return { lastUpdated: 'Abra pelo link publicado para ver dados ao vivo', responses: [] };
+  }
+}
+
+// ─── Renderiza tudo a partir de um objeto data ──────────────────────────────
+function renderAll(data) {
+  document.getElementById('lastUpdated').textContent = data.lastUpdated || '—';
+  const rs = data.responses || [];
+  const m = metrics(rs);
+  renderKPIs(m);
+  renderZone(m.nps);
+  renderFilters(rs);
+  renderTable(rs);
+  renderWordCloud(rs);
+  renderExpectations(rs);
+  renderGap(rs);
+  renderInsights(rs, m);
+}
+
+// ─── Botão "Atualizar agora" ────────────────────────────────────────────────
+async function refreshDashboard() {
+  const btn = document.getElementById('refreshBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Buscando...'; }
+  const data = await fetchData();
+  renderAll(data);
+  if (btn) { btn.disabled = false; btn.textContent = '↻ Atualizar agora'; }
+}
+
+// ─── helpers ───────────────────────────────────────────
+function cat(score) {
+  return score >= 9 ? 'p' : score >= 7 ? 'n' : 'd';
+}
+function catLabel(c) {
+  return { p: 'Promotor', n: 'Neutro', d: 'Detrator' }[c];
+}
+function chipClass(c) {
+  return { p: 'schip-p', n: 'schip-n', d: 'schip-d' }[c];
+}
+function tagClass(c) {
+  return { p: 'ctag-p', n: 'ctag-n', d: 'ctag-d' }[c];
+}
+function zone(nps) {
+  if (nps <= 0)  return { name: 'Zona Crítica',            color: '#F16060', range: '-100 a 0' };
+  if (nps <= 50) return { name: 'Zona de Aperfeiçoamento', color: '#F5B731', range: '1 a 50' };
+  if (nps <= 75) return { name: 'Zona de Qualidade',       color: '#56C264', range: '51 a 75' };
+  if (nps <= 90) return { name: 'Zona de Excelência',      color: '#27A745', range: '76 a 90' };
+  return             { name: 'Zona de Encantamento',    color: '#1A78C2', range: '91 a 100' };
+}
+function metrics(rs) {
+  const total = rs.length;
+  const p = rs.filter(r => r.score >= 9).length;
+  const n = rs.filter(r => r.score >= 7 && r.score < 9).length;
+  const d = rs.filter(r => r.score < 7).length;
+  const nps = total > 0 ? Math.round(((p - d) / total) * 100) : 0;
+  return { total, p, n, d, nps };
+}
+function pct(v, t) { return t > 0 ? Math.round((v / t) * 100) : 0; }
+
+// ─── KPIs ──────────────────────────────────────────────
+function renderKPIs(m) {
+  const z = zone(m.nps);
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kcard kcard-main">
+      <div class="klbl">NPS Score</div>
+      <div class="nps-row">
+        <div class="nps-num">${m.nps}</div>
+        <div class="nps-aside">
+          <div class="na-of">de 100 pontos</div>
+          <div class="nps-badge" style="background:${z.color};">${z.name}</div>
+        </div>
+      </div>
+      <div class="ksub">${m.total} respondente${m.total !== 1 ? 's' : ''} · ${z.range}</div>
+    </div>
+    <div class="kcard kcard-p">
+      <div class="klbl">Promotores</div>
+      <div class="kval">${m.p}</div>
+      <div class="ksub">${pct(m.p, m.total)}% · Nota 9–10</div>
+    </div>
+    <div class="kcard kcard-n">
+      <div class="klbl">Neutros</div>
+      <div class="kval">${m.n}</div>
+      <div class="ksub">${pct(m.n, m.total)}% · Nota 7–8</div>
+    </div>
+    <div class="kcard kcard-d">
+      <div class="klbl">Detratores</div>
+      <div class="kval">${m.d}</div>
+      <div class="ksub">${pct(m.d, m.total)}% · Nota 0–6</div>
+    </div>
+  `;
+}
+
+// ─── Zone Bar ──────────────────────────────────────────
+function renderZone(nps) {
+  // Map NPS -100..100 → 0..100% on bar
+  const pos = Math.min(97, Math.max(3, ((nps + 100) / 200) * 100));
+  document.getElementById('zoneWrap').innerHTML = `
+    <div class="sec" style="margin-top:0;">Classificação por Zona NPS</div>
+    <div class="zone-bar">
+      <div class="zseg zc">Crítica<br>-100 a 0</div>
+      <div class="zseg za">Aperfeiçoamento<br>1 a 50</div>
+      <div class="zseg zq">Qualidade<br>51 a 75</div>
+      <div class="zseg ze">Excelência<br>76 a 90</div>
+      <div class="zseg zen">Encantamento<br>91 a 100</div>
+    </div>
+    <div class="zone-pointer-row">
+      <div class="zone-pointer" style="left:${pos}%;">
+        <div class="zp-lbl">NPS ${nps}</div>
+        <div class="zp-arrow"></div>
+      </div>
+    </div>
+    <div class="zone-legend">
+      <div class="zl-item"><div class="zl-dot" style="background:#F16060;"></div> Crítica (-100 a 0)</div>
+      <div class="zl-item"><div class="zl-dot" style="background:#F5B731;"></div> Aperfeiçoamento (1 a 50)</div>
+      <div class="zl-item"><div class="zl-dot" style="background:#56C264;"></div> Qualidade (51 a 75)</div>
+      <div class="zl-item"><div class="zl-dot" style="background:#27A745;"></div> Excelência (76 a 90)</div>
+      <div class="zl-item"><div class="zl-dot" style="background:#1A78C2;"></div> Encantamento (91 a 100)</div>
+    </div>
+  `;
+}
+
+// ─── Filters ───────────────────────────────────────────
+let activeFilter = 'all';
+
+function renderFilters(rs) {
+  const m = metrics(rs);
+  const btns = [
+    { id: 'all', cls: 'fbtn-all', label: 'Todos',      cnt: m.total },
+    { id: 'p',   cls: 'fbtn-p',   label: 'Promotores', cnt: m.p },
+    { id: 'n',   cls: 'fbtn-n',   label: 'Neutros',    cnt: m.n },
+    { id: 'd',   cls: 'fbtn-d',   label: 'Detratores', cnt: m.d },
+  ];
+  document.getElementById('filterRow').innerHTML = btns.map(b =>
+    `<button class="fbtn ${b.cls}${activeFilter === b.id ? ' on' : ''}" onclick="applyFilter('${b.id}')">
+      ${b.label}<span class="fcnt">${b.cnt}</span>
+    </button>`
+  ).join('');
+}
+
+function applyFilter(f) {
+  activeFilter = f;
+  renderFilters(DATA.responses);
+  renderTable(DATA.responses);
+}
+
+// ─── Table ─────────────────────────────────────────────
+function renderTable(rs) {
+  const filtered = activeFilter === 'all'
+    ? rs
+    : rs.filter(r => cat(r.score) === activeFilter);
+
+  const tbl = document.getElementById('rtbl');
+  if (filtered.length === 0) {
+    tbl.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="eico">🔍</div><div class="emsg">Nenhuma resposta nesta categoria ainda.</div></div></td></tr>`;
+    return;
+  }
+
+  const rows = filtered.map(r => {
+    const c = cat(r.score);
+    return `<tr>
+      <td style="white-space:nowrap;font-size:11px;color:var(--pmid);">${r.date || '—'}</td>
+      <td style="text-align:center;"><div class="schip ${chipClass(c)}">${r.score}</div></td>
+      <td><span class="ctag ${tagClass(c)}">${catLabel(c)}</span></td>
+      <td style="max-width:300px;">${r.reason || '—'}</td>
+      <td style="max-width:200px;color:var(--pdark);font-size:11.5px;">${r.expectations || '—'}</td>
+      <td style="max-width:280px;color:#555;font-size:11.5px;">${r.suggestion || '—'}</td>
+    </tr>`;
+  }).join('');
+
+  tbl.innerHTML = `
+    <thead><tr>
+      <th>Data</th><th style="text-align:center;">Nota</th><th>Tipo</th>
+      <th>Principal Motivo</th><th>Expectativas</th><th>Mensagem à Diretoria</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  `;
+}
+
+// ─── Word Cloud ─────────────────────────────────────────
+function renderWordCloud(rs) {
+  // Stopwords genéricas — sempre removidas
+  const STOP = new Set([
+    'a','o','e','de','do','da','em','um','uma','para','com','não','que','se','na','no',
+    'os','as','por','mais','mas','ou','é','ao','dos','das','ele','ela','eles','isso',
+    'este','essa','nada','tudo','sempre','muito','também','todos','todas','foi','ser',
+    'ter','até','já','só','nos','gosto','declarar','muita','locar','vocês','conosco',
+    'umas','uns','seu','sua','meu','lhe','aos','lhes','desta','deste','dessa','desse',
+    'aqui','onde','quem','como','qual','quando','assim','cada','nosso','nossa'
+  ]);
+
+  // Palavras de contexto: válidas em respostas negativas, mas RUÍDO em respostas positivas.
+  // Ex: "Muito solícitos em resolver os IMPREVISTOS e PROBLEMAS..." → contexto, não o ponto central.
+  const PROBLEM_CTX = new Set([
+    'problemas','problema','imprevistos','imprevisto','dificuldades','dificuldade',
+    'resolver','resolveu','resolveram','resolvido','questão','questões',
+    'situação','situações','reclamação','reclamações','erros','erro',
+    'falhas','falha','ocorrência','ocorrências','pendência','pendências',
+    'atraso','atrasos','demora','demoras','insatisfação'
+  ]);
+
+  // Palavras genéricas de serviço — vagas sozinhas, só ganham significado em bigramas
+  const GENERIC_ALONE = new Set([
+    'atendimento','serviço','processo','empresa','equipe','time','pessoal'
+  ]);
+
+  // Sinais de qualidade — amplificados visualmente independentemente da frequência
+  const QUALITY_WORDS = new Set([
+    'qualidade','excelente','ótimo','ótima','ótimos','ótimas','agilidade','facilidade',
+    'rapidez','eficiência','eficiente','solícitos','solícito','prestativo','prestativos',
+    'atencioso','atenciosos','satisfação','satisfeito','encantado','alegria',
+    'profissionalismo','comprometimento','dedicação','confiança','recomendo',
+    'cuidadosos','cuidadoso','transparência','honestidade','excelência','acessível',
+    'acessíveis','pontualidade','pontual','competência','competente'
+  ]);
+
+  // Bigramas valiosos: detectados como unidade antes de dividir em palavras individuais.
+  // Cada entrada: { re: RegExp (sem flag g), label: string exibida na nuvem }
+  const BIGRAMS = [
+    { re: /preço\s+acess[íi]vel/i,      label: 'preço acessível' },
+    { re: /preços\s+acess[íi]veis/i,    label: 'preços acessíveis' },
+    { re: /melhores?\s+preços?/i,        label: 'melhores preços' },
+    { re: /atendimento\s+excelente/i,    label: 'atendimento excelente' },
+    { re: /excelente\s+atendimento/i,    label: 'atendimento excelente' },
+    { re: /[oó]timo\s+atendimento/i,     label: 'ótimo atendimento' },
+    { re: /bom\s+atendimento/i,          label: 'bom atendimento' },
+    { re: /alta\s+qualidade/i,           label: 'alta qualidade' },
+    { re: /muita\s+qualidade/i,          label: 'alta qualidade' },
+    { re: /boa\s+qualidade/i,            label: 'boa qualidade' },
+    { re: /muito\s+sol[íi]citos?/i,      label: 'muito solícitos' },
+    { re: /super\s+atenciosos?/i,        label: 'super atencioso' },
+    { re: /muito\s+prestativos?/i,       label: 'muito prestativo' },
+    { re: /boa\s+comunica[çc][aã]o/i,    label: 'boa comunicação' },
+    { re: /boa\s+experiência/i,          label: 'boa experiência' },
+    { re: /muito\s+profissional/i,       label: 'muito profissional' },
+    { re: /super\s+recomendo/i,          label: 'super recomendo' },
+    { re: /muito\s+satisfeit[ao]/i,      label: 'muito satisfeito' },
+    { re: /nada\s+a\s+reclamar/i,        label: 'nada a reclamar' },
+    { re: /super\s+indicad[ao]/i,        label: 'super indicado' },
+  ];
+
+  // Acumula tokens com peso semântico (não apenas frequência bruta)
+  const tokenMap = new Map();
+  const add = (token, w) => tokenMap.set(token, (tokenMap.get(token) || 0) + w);
+
+  rs.forEach(r => {
+    const isPos = r.score >= 9;   // promotor
+    const isNeg = r.score < 7;    // detrator
+    const base  = 1.0;
+
+    const text = `${r.reason || ''} ${r.suggestion || ''}`;
+    const norm = text.toLowerCase();
+
+    // 1) Detectar bigramas — adicionados como token unificado
+    BIGRAMS.forEach(({ re, label }) => {
+      if (re.test(norm)) add(label, base * 1.6);
+    });
+
+    // 2) Palavras individuais com filtragem contextual
+    const words = norm
+      .replace(/[^a-záàâãéêíóôõúç\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 3 && !STOP.has(w));
+
+    words.forEach(w => {
+      // Em resposta POSITIVA: palavras de contexto de problema são ruído — ignorar
+      if (isPos && PROBLEM_CTX.has(w)) return;
+      // Palavras genéricas de serviço sem adjetivo: ignorar (capturadas em bigramas)
+      if (GENERIC_ALONE.has(w)) return;
+      // Peso: sinais de qualidade ganham amplificação visual
+      const weight = QUALITY_WORDS.has(w) ? base * 1.45 : base;
+      add(w, weight);
+    });
+  });
+
+  const sorted = [...tokenMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
+
+  if (!sorted.length) {
+    document.getElementById('wcloud').innerHTML = '<span style="color:var(--pmid);font-size:13px;">Sem respostas qualitativas ainda.</span>';
+    return;
+  }
+
+  const maxW = sorted[0][1];
+  const minW = sorted[sorted.length - 1][1];
+  const COLORS = ['#200249', '#5C12A7', '#7164A5', '#E40101', '#1A78C2', '#27A745', '#F39C12'];
+
+  document.getElementById('wcloud').innerHTML = sorted.map(([token, weight], i) => {
+    const ratio = maxW === minW ? 0.5 : (weight - minW) / (maxW - minW);
+    const size  = Math.round(13 + ratio * 34);
+    const color = COLORS[i % COLORS.length];
+    return `<span class="wd" style="font-size:${size}px;color:${color};">${token}</span>`;
+  }).join('');
+}
+
+// ─── Expectations ──────────────────────────────────────
+function renderExpectations(rs) {
+  const EXP_COLORS = {
+    'Supera as expectativas':  '#27A745',
+    'Atendeu as expectativas': '#1A78C2',
+    'Parcialmente':            '#F39C12',
+    'Não atendeu':             '#E40101',
+    'Não informado':           '#999'
+  };
+
+  const counts = {};
+  rs.forEach(r => {
+    const k = r.expectations || 'Não informado';
+    counts[k] = (counts[k] || 0) + 1;
+  });
+
+  const total = rs.length;
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+  document.getElementById('expList').innerHTML = sorted.map(([label, cnt]) => {
+    const p = pct(cnt, total);
+    const color = EXP_COLORS[label] || '#7164A5';
+    return `
+      <div class="exp-item">
+        <div class="exp-row">
+          <span class="exp-name">${label}</span>
+          <span class="exp-cnt">${cnt} (${p}%)</span>
+        </div>
+        <div class="exp-track">
+          <div class="exp-fill" style="width:${p}%;background:${color};"></div>
+        </div>
+      </div>
+    `;
+  }).join('') || '<span style="color:var(--pmid);font-size:13px;">Sem dados.</span>';
+}
+
+// ─── Gap Analysis ──────────────────────────────────────
+function renderGap(rs) {
+  const gaps = rs.filter(r => {
+    const c = cat(r.score);
+    const exp = (r.expectations || '').toLowerCase();
+    return c !== 'p' && (exp.includes('supera') || exp.includes('atendeu') || exp.includes('atend'));
+  });
+
+  let inner;
+  if (!gaps.length) {
+    inner = `<div class="gap-ok">
+      <div class="go-ico">✅</div>
+      <div class="go-txt">Nenhum caso identificado — todos os clientes com expectativas atendidas ou superadas são promotores da QHL.</div>
+    </div>`;
+  } else {
+    const rows = gaps.map(r => {
+      const c = cat(r.score);
+      return `<tr>
+        <td style="font-size:11px;color:var(--pmid);white-space:nowrap;">${r.date || '—'}</td>
+        <td style="text-align:center;"><div class="schip ${chipClass(c)}">${r.score}</div></td>
+        <td><span class="ctag ${tagClass(c)}">${catLabel(c)}</span></td>
+        <td>${r.expectations}</td>
+        <td style="max-width:280px;">${r.reason || '—'}</td>
+      </tr>`;
+    }).join('');
+    inner = `<table class="rtbl"><thead><tr>
+      <th>Data</th><th style="text-align:center;">Nota</th><th>Tipo</th><th>Expectativas</th><th>Motivo</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  document.getElementById('gapCard').innerHTML = `
+    <div class="gap-ttl">⚠️ Alerta: Expectativas Atendidas × Não Promotores</div>
+    <div class="gap-desc">Clientes que relataram expectativas atendidas ou superadas, mas deram nota inferior a 9. Alto potencial de conversão — vale investigar o que falta para encantá-los.</div>
+    ${inner}
+  `;
+}
+
+// ─── Insights ──────────────────────────────────────────
+function renderInsights(rs, m) {
+  const z = zone(m.nps);
+  const STOP2 = new Set([
+    'a','o','e','de','do','da','em','um','uma','para','com','não','que','se','na','no',
+    'os','as','por','mais','mas','ou','é','ao','dos','das','nada','tudo','sempre',
+    'muito','também','gosto','declarar','muita','melhores','locar','vocês','resolver'
+  ]);
+
+  const reasonText = rs.map(r => r.reason || '').join(' ');
+  const reasonWords = reasonText.toLowerCase().replace(/[^a-záàâãéêíóôõúç\s]/g, ' ')
+    .split(/\s+/).filter(w => w.length > 4 && !STOP2.has(w));
+  const freq2 = {};
+  reasonWords.forEach(w => { freq2[w] = (freq2[w] || 0) + 1; });
+  const topWords = Object.entries(freq2).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([w]) => w);
+
+  const exceedCnt = rs.filter(r => (r.expectations || '').toLowerCase().includes('supera')).length;
+  const exceedPct = pct(exceedCnt, m.total);
+  const ppct = pct(m.p, m.total);
+  const gapCnt = rs.filter(r => {
+    const c = cat(r.score);
+    const exp = (r.expectations || '').toLowerCase();
+    return c !== 'p' && (exp.includes('supera') || exp.includes('atend'));
+  }).length;
+
+  const ins = [];
+
+  ins.push({
+    ico: '📈', type: 'Performance',
+    txt: `NPS de <strong>${m.nps} pontos</strong> coloca a QHL na <strong>${z.name}</strong> (${z.range}). ${m.nps >= 91 ? 'Resultado excepcional — a empresa está entre as referências de encantamento do mercado.' : m.nps >= 76 ? 'Resultado sólido. Monitore continuamente para sustentar a excelência.' : 'Há espaço para crescimento. Identifique e ataque as causas de insatisfação.'}`
+  });
+
+  ins.push({
+    ico: '🌟', type: 'Promotores & Lealdade',
+    txt: `<strong>${ppct}% dos respondentes</strong> são promotores ativos. ${ppct === 100 ? 'Base 100% promotora é um sinal raro — aproveite para ativar programas de indicação (referral) e depoimentos.' : ppct >= 75 ? 'Percentual elevado. Foque em converter os neutros com ações de follow-up personalizadas.' : 'Investigar motivadores de insatisfação deve ser prioridade.'}`
+  });
+
+  if (topWords.length > 0) {
+    ins.push({
+      ico: '💬', type: 'Temas Mais Citados',
+      txt: `Os atributos mais mencionados pelos clientes são: <strong>${topWords.join(', ')}</strong>. Esses são os pilares de valor percebido — reforce-os na comunicação, no treinamento de equipe e nos processos operacionais.`
+    });
+  }
+
+  ins.push({
+    ico: '🎯', type: 'Expectativas',
+    txt: `<strong>${exceedPct}% dos respondentes</strong> afirmam que a experiência <strong>superou</strong> suas expectativas. ${exceedPct === 100 ? 'Superar consistentemente expectativas é o diferencial mais sustentável. Documente e replique as boas práticas que geram esse resultado.' : 'Estude o que diferencia quem teve expectativas superadas daqueles que não tiveram — há uma oportunidade de padronização.'}`
+  });
+
+  if (gapCnt > 0) {
+    ins.push({
+      ico: '🔔', type: 'Oportunidade de Conversão',
+      txt: `<strong>${gapCnt} cliente${gapCnt > 1 ? 's' : ''}</strong> tiveram expectativas atendidas mas não são promotores ainda. São os leads mais quentes para ações de encantamento: um contato proativo ou benefício personalizado pode converter esse grupo.`
+    });
+  }
+
+  if (m.total < 30) {
+    ins.push({
+      ico: '📊', type: 'Representatividade da Amostra',
+      txt: `Base em construção: <strong>${m.total} respondente${m.total !== 1 ? 's' : ''}</strong>. Para resultados estatisticamente sólidos, recomendamos pelo menos 30 respostas. Considere reforçar o envio da pesquisa para ampliar a amostra.`
+    });
+  }
+
+  document.getElementById('insCard').innerHTML = `
+    <div class="ins-hdr">💡 Insights & Recomendações para a QHL</div>
+    <div class="ins-grid">${ins.map(i => `
+      <div class="ins-item">
+        <div class="ii-ico">${i.ico}</div>
+        <div class="ii-type">${i.type}</div>
+        <div class="ii-txt">${i.txt}</div>
+      </div>`).join('')}
+    </div>
+  `;
+}
+
+// ─── INIT ──────────────────────────────────────────────
+refreshDashboard();
+</script>
+</body>
+</html>
