@@ -359,31 +359,39 @@ function renderAll(data) {
   renderInsights(rs, m);
 }
 
+// ─── Carregamento inicial silencioso ────────────────────────────────────────
+async function initDashboard() {
+  const data = await fetchData();
+  currentData = data;
+  renderAll(data);
+}
+
 // ─── Botão "Atualizar agora" ────────────────────────────────────────────────
 async function refreshDashboard() {
   const btn    = document.getElementById('refreshBtn');
   const status = document.getElementById('syncStatus');
-  if (btn)    { btn.disabled = true; btn.textContent = '⏳ Buscando...'; }
-  if (status) { status.textContent = ''; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Buscando...'; }
 
+  const prevUpdated = currentData.lastUpdated;
   const data = await fetchData();
+  const isNew = data.lastUpdated !== prevUpdated && data.responses && data.responses.length > 0;
+
   currentData = data;
   renderAll(data);
 
-  // Hora local da verificação
-  const now  = new Date();
-  const hhmm = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
+  const hhmm = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   if (btn) { btn.disabled = false; btn.textContent = '↻ Atualizar agora'; }
 
   if (status) {
-    const ok = data.responses && data.responses.length > 0;
-    if (ok) {
-      status.innerHTML = `✓ Verificado às ${hhmm} &nbsp;·&nbsp; Dados de ${data.lastUpdated}`;
-      status.style.color = 'rgba(255,255,255,.55)';
-    } else {
-      status.textContent = `⚠ Sem dados — abra pelo link publicado`;
+    if (!data.responses || data.responses.length === 0) {
+      status.textContent = '⚠ Sem dados — abra pelo link publicado';
       status.style.color = 'rgba(255,180,0,.7)';
+    } else if (isNew) {
+      status.innerHTML = `✓ Novos dados às ${hhmm}!`;
+      status.style.color = 'rgba(160,255,160,.85)';
+    } else {
+      status.innerHTML = `✓ Sincronizado às ${hhmm} · sem novidades`;
+      status.style.color = 'rgba(255,255,255,.4)';
     }
   }
 }
@@ -801,7 +809,7 @@ function renderInsights(rs, m) {
 }
 
 // ─── INIT ──────────────────────────────────────────────
-refreshDashboard();
+initDashboard();
 </script>
 </body>
 </html>
