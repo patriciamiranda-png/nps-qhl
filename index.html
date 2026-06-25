@@ -45,16 +45,6 @@
     .h-meta .h-val {
       font-size: 13px; color: rgba(255,255,255,.85); font-weight: 500; margin-top: 3px;
     }
-    #refreshBtn {
-      margin-top: 12px; display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(255,255,255,.13); border: 1.5px solid rgba(255,255,255,.28);
-      color: white; padding: 7px 16px; border-radius: 20px;
-      font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600;
-      cursor: pointer; transition: all .2s; white-space: nowrap;
-    }
-    #refreshBtn:hover:not(:disabled) { background: rgba(255,255,255,.24); }
-    #refreshBtn:disabled { opacity: .5; cursor: not-allowed; }
-
     /* ── CONTAINER ── */
     .wrap { max-width: 1380px; margin: 0 auto; padding: 40px 52px; }
 
@@ -284,8 +274,6 @@
   <div class="h-meta">
     <div class="h-lbl">Última atualização</div>
     <div class="h-val" id="lastUpdated">—</div>
-    <button id="refreshBtn" onclick="refreshDashboard()">↻ Atualizar agora</button>
-    <div id="syncStatus" style="font-size:10.5px;color:rgba(255,255,255,.45);margin-top:6px;min-height:14px;text-align:right;"></div>
   </div>
 </header>
 
@@ -364,36 +352,6 @@ async function initDashboard() {
   const data = await fetchData();
   currentData = data;
   renderAll(data);
-}
-
-// ─── Botão "Atualizar agora" ────────────────────────────────────────────────
-async function refreshDashboard() {
-  const btn    = document.getElementById('refreshBtn');
-  const status = document.getElementById('syncStatus');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Buscando...'; }
-
-  const prevUpdated = currentData.lastUpdated;
-  const data = await fetchData();
-  const isNew = data.lastUpdated !== prevUpdated && data.responses && data.responses.length > 0;
-
-  currentData = data;
-  renderAll(data);
-
-  const hhmm = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  if (btn) { btn.disabled = false; btn.textContent = '↻ Atualizar agora'; }
-
-  if (status) {
-    if (!data.responses || data.responses.length === 0) {
-      status.textContent = '⚠ Sem dados — abra pelo link publicado';
-      status.style.color = 'rgba(255,180,0,.7)';
-    } else if (isNew) {
-      status.innerHTML = `✓ Novos dados às ${hhmm}!`;
-      status.style.color = 'rgba(160,255,160,.85)';
-    } else {
-      status.innerHTML = `✓ Sincronizado às ${hhmm} · sem novidades`;
-      status.style.color = 'rgba(255,255,255,.4)';
-    }
-  }
 }
 
 // ─── helpers ───────────────────────────────────────────
