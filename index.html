@@ -330,6 +330,9 @@
 <footer>Documento confidencial — Elaborado por Filum Gestão</footer>
 
 <script>
+// Último snapshot de dados — atualizado por refreshDashboard()
+let currentData = { lastUpdated: '—', responses: [] };
+
 // ─── Fetch data.json (fonte de verdade, atualizada pelas rotinas) ──────────
 async function fetchData() {
   try {
@@ -364,6 +367,7 @@ async function refreshDashboard() {
   if (status) { status.textContent = ''; }
 
   const data = await fetchData();
+  currentData = data;
   renderAll(data);
 
   // Hora local da verificação
@@ -496,8 +500,8 @@ function renderFilters(rs) {
 
 function applyFilter(f) {
   activeFilter = f;
-  renderFilters(DATA.responses);
-  renderTable(DATA.responses);
+  renderFilters(currentData.responses);
+  renderTable(currentData.responses);
 }
 
 // ─── Table ─────────────────────────────────────────────
