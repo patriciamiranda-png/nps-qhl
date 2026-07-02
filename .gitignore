@@ -3,3 +3,6 @@
 !.nojekyll
 !index.html
 !data.json
+!.github/
+!.github/workflows/
+!.github/workflows/pages.yml
